@@ -162,20 +162,29 @@ forstep(i = #B, 1, -1,{
 	
 	\\ For each row...
 	for(j = 1, exponent_matrix_size[1],
+	
+		\\ If we need to eliminate...
 		if(exponent_matrix[j, i] == 1,
-
+		
+			\\ Check whether or not an above row has a "1" in this column.
+			\\		If there is such a row, we'll use that row to eliminate this one.
+			\\		Otherwise, we'll log this row in found_row and use it to eliminate later rows.
 			if(found_row == -1, 
-				\\ If this is the first row with this prime...
+
 				found_row = j;
 				
-				,
-				\\ ELSE: found_row equals some j, and we should use that row j to eliminate the row.
+				, \\ <-- begin ELSE clause. (i don't like this syntax!)
+				\\ ELSE: found_row equals some j, and we should use that row j to eliminate this row.
 				
 				\\ For each entry in row j, add the corresponding entry from found_row, mod 2.
 				for(k = 1, matsize(exponent_matrix)[2], 
 					exponent_matrix[j,k] += exponent_matrix[found_row,k];
 					exponent_matrix[j,k] %= 2;
 				);
+				
+				\\ Log that we added row found_row into row j.
+				listput(component_lists[j], found_row);
+				
 			);
 		);
 	);
