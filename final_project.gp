@@ -20,8 +20,8 @@
 
 \\ The number to factor.
 \\n = 135292257399511;   	\\ Assigned number.
-n = 499 94860 12441;			\\ Bressoud's number (Fact. and Primality Testing p110)
-\\n = 100;
+\\n = 499 94860 12441;			\\ Bressoud's number (Fact. and Primality Testing p110)
+n = 100;
 
 
 
@@ -35,15 +35,16 @@ printf("Attempting to factor %ld.", n);
 
 \\\\\\\\\\\\\\\\\\\\\\\
 \\ STEP 1: Choose B and M; build a factor base.
-\\B_size = 10; 		\\ TODO figure out how to work the trabb-pardo/knuth table into this.
-\\M = 20;						\\ These are bad choices i'm sure; just dummies for now.
+B_size = 10; 		\\ TODO figure out how to work the trabb-pardo/knuth table into this.
+M = 20;						\\ These are bad choices i'm sure; just dummies for now.
 
 \\ Bressoud's B and M (p110)
-B_size = 30;
-M = 5000;
+\\B_size = 30;
+\\M = 5000;
 
-\\ Q(r)
-Q(r) = r*r-n;
+\\ Expressions for Q(r) and r
+Q_eqn(r) = r*r-n;
+r_eqn(i) = floor(sqrt(n)) + i - M - 1;
 
 printf("Step 1: building a factor base. Factor base size = %i.", B_size);
 
@@ -72,8 +73,8 @@ for(i = 1, #qs_sums, {
 	if(qs_sums[i] >= qs_threshold,
 	
 		\\ Get the number to factor.
-		r = floor(sqrt(n)) + i - M - 1;
-		Qr = Q(r);
+		r = r_eqn(i) 	;
+		Qr = Q_eqn(r);
 		\\printf("Q(r): %d\n", Qr);
 		
 		\\ Create an exponent vector for it using factor base.
@@ -139,20 +140,19 @@ r_list = r_list[1,];
 \\ Keep a copy of the un-reduced exp. mat.
 exponent_matrix_unreduced = exponent_matrix;
 
-\\ Print out.
-/*
-print("exponent_matrix:");
-print_matrix_readable(exponent_matrix);
-print("Qr list:");
-print(Qr_list);
-print("r list:");
-print(r_list);*/
-
 \\ Mod 2.
 exponent_matrix %= 2;
 
+
+\\ OBSOLETE:
 \\ Append identity matrix.
-exponent_matrix = matconcat([exponent_matrix, matid(exponent_matrix_size[1])]);
+\\exponent_matrix = matconcat([exponent_matrix, matid(exponent_matrix_size[1])]);
+
+\\ New strategy: Keep a vector of lists which will do the same as the above identity
+\\		matrix; that is, track what rows are added together to produce this row.
+\\ 		This will (hopefully) reduce memory consumption.
+component_lists = vector(exponent_matrix_size[1], unused, listcreate());
+for(i = 1, exponent_matrix_size[1], listput(component_lists[i],i));
 
 \\ Eliminate mod 2.
 \\ For each column (starting with larger primes first)...
