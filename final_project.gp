@@ -20,8 +20,8 @@
 
 \\ The number to factor.
 \\n = 135292257399511;   	\\ Assigned number.
-\\n = 499 94860 12441;			\\ Bressoud's number (Fact. and Primality Testing p110)
-n = 100;
+n = 499 94860 12441;			\\ Bressoud's number (Fact. and Primality Testing p110)
+\\n = 100;
 
 
 
@@ -35,12 +35,12 @@ printf("Attempting to factor %ld.", n);
 
 \\\\\\\\\\\\\\\\\\\\\\\
 \\ STEP 1: Choose B and M; build a factor base.
-B_size = 10; 		\\ TODO figure out how to work the trabb-pardo/knuth table into this.
-M = 20;						\\ These are bad choices i'm sure; just dummies for now.
+\\B_size = 10; 		\\ TODO figure out how to work the trabb-pardo/knuth table into this.
+\\M = 20;						\\ These are bad choices i'm sure; just dummies for now.
 
 \\ Bressoud's B and M (p110)
-\\B_size = 30;
-\\M = 5000;
+B_size = 30;
+M = 10000;
 
 \\ Expressions for Q(r) and r
 Q_eqn(r) = r*r-n;
@@ -73,9 +73,9 @@ for(i = 1, #qs_sums, {
 	if(qs_sums[i] >= qs_threshold,
 	
 		\\ Get the number to factor.
-		r = r_eqn(i) 	;
+		r = r_eqn(i);
 		Qr = Q_eqn(r);
-		\\printf("Q(r): %d\n", Qr);
+		printf("Attempting trial division on Q(r) = %d\n", Qr);
 		
 		\\ Create an exponent vector for it using factor base.
 		local(exp_vec = vector(#B, unused, 0));
@@ -202,14 +202,14 @@ for(i = 1, exponent_matrix_size[1],{
 		\\ Generate exponent vector.
 		exponents = vector(exponent_matrix_size[2], unused, 0);
 		
-		\\ For each entry in the identity-matrix half of exponent_matrix...
-		for(j = exponent_matrix_size[2] + 1, matsize(exponent_matrix)[2],
-			
-			\\ If there's a "1" here...
-			if(exponent_matrix[i,j] == 1, exponents += exponent_matrix_unreduced[j-exponent_matrix_size[2],]);
-			
+		\\ The list of rows that went into making this row.
+		component_list = component_lists[i];
+		
+		\\ For each entry in component_list...
+		for(j = 1, #component_list, 
+			exponents += exponent_matrix_unreduced[component_list[j],];
 		);
-				
+						
 		\\ Calculate value of factor base raised to exponents/2. Note that 
 		\\	exponents should be divisible by 2; I'll leave the "floor" out
 		\\	so that an error case where this isn't true should be immediately clear.
