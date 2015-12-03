@@ -40,16 +40,17 @@ printf("Attempting to factor %ld.", n);
 
 \\ Bressoud's B and M (p110)
 B_size = 30;
-M = 10000;
+M = 5000;
 
 \\ Expressions for Q(r) and r
 Q_eqn(r) = r*r-n;
-r_eqn(i) = floor(sqrt(n)) + i - M - 1;
+r_eqn(i) = floor(sqrt(n)) + i - M;
 
 printf("Step 1: building a factor base. Factor base size = %i.", B_size);
 
 \\ Get the factor base.
 B = factor_base(n, B_size);
+B_largest_prime= B[#B];
 printf("Factor base of size %i:", B_size);
 print(B);
 
@@ -59,15 +60,18 @@ print(B);
 
 \\\\\\\\\\\\\\\\\\\\\\\\
 \\ STEP 2: Quadratic Sieve.
-qs_mat = quadratic_sieve(B, n, M);
-qs_sums = sum(x = 1, matsize(qs_mat)[2], qs_mat[1..2*M+1,x]);
-qs_threshold = (3/2)*log(B_size);
+qs_sums = quadratic_sieve(B, n, M,r_eqn);
+qs_threshold = (log(n)/2 + log(M)) - (3/2)*log(B_largest_prime);
 
 
 \\ The matrix to Gaussian eliminate.
 exponent_matrix = []; 
 Qr_list = []; \\ The list of Q(r)s that go with each exponent mat.
 r_list = [];
+i_list = [];
+
+factored_completely = 0; \\ Debug: count the number of Q(r)s that factor completely.
+
 \\ Iterate over each and check against threshold. If it passes, attempt trial divison.
 for(i = 1, #qs_sums, {
 	if(qs_sums[i] >= qs_threshold,
@@ -75,7 +79,8 @@ for(i = 1, #qs_sums, {
 		\\ Get the number to factor.
 		r = r_eqn(i);
 		Qr = Q_eqn(r);
-		printf("Attempting trial division on Q(r) = %d\n", Qr);
+		printf("Attempting trial division on Q(%d) = %d\n", r,Qr);
+		
 		
 		\\ Create an exponent vector for it using factor base.
 		local(exp_vec = vector(#B, unused, 0));
@@ -89,39 +94,50 @@ for(i = 1, #qs_sums, {
 		
 		\\ Trial division...(note that we ensure Qr is nonnegative by mult. by Qr_sign)
 		\\printf("Attempting trial division on %i...\n", Qr_sign*Qr);
-		local(result = trial_division( Qr_sign*Qr, B_size));
+		local(result = trial_division( Qr_sign*Qr, B_largest_prime));
 		local(td_e = result[2], td_p = result[3]);
-		\\print(result[2]);
-		\\print(result[3]);
 		
-		\\ Now we put the exponents from trial division into our exponent matrix.
-		local(i_tde = 1, i_expvec = 1);
-		while(i_tde <= #td_e && i_expvec <= #exp_vec,
-			if(td_p[i_tde] == B[i_expvec],
-				\\ Case 1: The prime in the trial division equals the prime in our factor base.
-				exp_vec[i_expvec] = td_e[i_tde];
-				i_expvec++; i_tde++;,
-				\\ ELSE If
-				\\ Case 2
-				td_p[i_tde] < B[i_expvec],
-				i_tde++,
-				\\ ELSE If
-				\\ Case 3
-				td_p[i_tde] > B[i_expvec],
-				i_expvec++
+		print(result);
+				
+		\\ If we factored completely over the factor base.
+		\\ TODO is this right?
+		if(result[4] == 1 && td_p[#td_p] <= B_largest_prime,
+		
+			factored_completely += 1;
+		
+			\\ Now we put the exponents from trial division into our exponent matrix.
+			local(i_tde = 1, i_expvec = 1);
+			while(i_tde <= #td_e && i_expvec <= #exp_vec,
+				if(td_p[i_tde] == B[i_expvec],
+					\\ Case 1: The prime in the trial division equals the prime in our factor base.
+					exp_vec[i_expvec] = td_e[i_tde];
+					i_expvec++; i_tde++;,
+					\\ ELSE If
+					\\ Case 2
+					td_p[i_tde] < B[i_expvec],
+					i_tde++,
+					\\ ELSE If
+					\\ Case 3
+					td_p[i_tde] > B[i_expvec],
+					i_expvec++
+				);
 			);
-		);
-		
-		\\print("Exponent vector to be placed in table:");
-		\\print(exp_vec);	
-		
-		\\ Place in matrix.
-		exponent_matrix = matconcat([exponent_matrix;exp_vec]);
-		Qr_list = matconcat([Qr_list,Qr]);
-		r_list = matconcat([r_list,r]);
+			
+			\\print("Exponent vector to be placed in table:");
+			\\print(exp_vec);	
+			
+			\\ Place in matrix.
+			exponent_matrix = matconcat([exponent_matrix;exp_vec]);
+			Qr_list = matconcat([Qr_list,Qr]);
+			r_list = matconcat([r_list,r]);
+			i_list = matconcat([i_list,i]);
+			
+			
+		); \\ End if factored over factor base
 		
 	);
 });
+
 
 \\ Get size.
 exponent_matrix_size = matsize(exponent_matrix);
@@ -132,10 +148,8 @@ exponent_matrix_size[1] -= 1; \\ make sure we update the new row count.
 
 \\ Additionally, change qr to a vector, not a 1xk matrix.
 Qr_list = Qr_list[1,];
-
-\\ same with r_list.
 r_list = r_list[1,];
-
+i_list = i_list[1,];
 
 \\ Keep a copy of the un-reduced exp. mat.
 exponent_matrix_unreduced = exponent_matrix;
@@ -198,6 +212,8 @@ for(i = 1, exponent_matrix_size[1],{
 	
 	\\ If it's a zero row...
 	if(exponent_matrix[i,1..exponent_matrix_size[2]] == 0,
+	
+		print("zero row");
 		
 		\\ Generate exponent vector.
 		exponents = vector(exponent_matrix_size[2], unused, 0);
