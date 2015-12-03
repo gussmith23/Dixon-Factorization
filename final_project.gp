@@ -79,7 +79,7 @@ for(i = 1, #qs_sums, {
 		\\ Get the number to factor.
 		r = r_eqn(i);
 		Qr = Q_eqn(r);
-		printf("Attempting trial division on Q(%d) = %d\n", r,Qr);
+		printf("Q(%d) = %d passes sieve threshold; attempting trial division...", r,Qr);
 		
 		
 		\\ Create an exponent vector for it using factor base.
@@ -96,15 +96,13 @@ for(i = 1, #qs_sums, {
 		\\printf("Attempting trial division on %i...\n", Qr_sign*Qr);
 		local(result = trial_division( Qr_sign*Qr, B_largest_prime));
 		local(td_e = result[2], td_p = result[3]);
-		
-		print(result);
-				
+						
 		\\ If we factored completely over the factor base.
 		\\ TODO is this right?
 		if(result[4] == 1 && td_p[#td_p] <= B_largest_prime,
 		
-			factored_completely += 1;
-		
+			printf("factors completely over factor base! Placing in exponent matrix.\n", r);
+			
 			\\ Now we put the exponents from trial division into our exponent matrix.
 			local(i_tde = 1, i_expvec = 1);
 			while(i_tde <= #td_e && i_expvec <= #exp_vec,
@@ -133,6 +131,11 @@ for(i = 1, #qs_sums, {
 			\\i_list = matconcat([i_list,i]);
 			listput(r_list,r);
 			
+		
+						
+			, \\ ELSE log failure.
+			printf("does not factor over factor base.\n");
+
 		); \\ End if factored over factor base
 		
 	);
@@ -179,13 +182,10 @@ forstep(i = #B, 1, -1,{
 			if(found_row == -1, 
 
 				found_row = j;
-				printf("first row with prime %d is %d\n", i, j);
 				
 				, \\ <-- begin ELSE clause. (i don't like this syntax!)
 				\\ ELSE: found_row equals some j, and we should use that row j to eliminate this row.
-				
-				printf("row %d has prime %d\n", j, i);
-				
+								
 				\\ For each entry in row j, add the corresponding entry from found_row, mod 2.
 				\\ Note here that we use matsize instead of exponent_matrix_size, as we want to
 				\\		add the ENTIRE row, including the identity matrix entries.
@@ -203,27 +203,18 @@ forstep(i = #B, 1, -1,{
 
 	\\ Now we actually eliminate the row - i.e. remove it.
 	if(found_row != -1,
-			
-		printf("removing row %d, rows: %d\n", found_row, matsize(exponent_matrix)[1]);
-		\\print_matrix_readable(exponent_matrix);
-	
+				
 			\\ CASE 1: we need to eliminate the first row.
 		if(found_row == 1,
 			exponent_matrix = exponent_matrix[2..exponent_matrix_size[1],];
-			print("case 1");
 			
 			\\ CASE 2: eliminate the last row.
 			, found_row == exponent_matrix_size[1],
 			exponent_matrix = exponent_matrix[1..(exponent_matrix_size[1]-1),];
-			print("case 2");
 			
 			\\ Else: eliminate a middle row.
 			, exponent_matrix = matconcat([ exponent_matrix[1..(found_row-1),] ; exponent_matrix[(found_row+1)..matsize(exponent_matrix)[1],] ]);
-			print("case 3");
 		);
-		
-		\\print_matrix_readable(exponent_matrix);
-		printf("rows: %d\n", matsize(exponent_matrix)[1]);
 		
 		if(type(exponent_matrix) == "t_POL", breakpoint());
 								
@@ -244,8 +235,6 @@ for(i = 1, exponent_matrix_size[1],{
 	
 	\\ If it's a zero row...
 	if(exponent_matrix[i,1..exponent_matrix_size[2]] == 0,
-	
-		print("zero row");
 		
 		\\ Generate exponent vector.
 		exponents = vector(exponent_matrix_size[2], unused, 0);
@@ -295,5 +284,5 @@ for(i = 1, exponent_matrix_size[1],{
 \\ Sort factors.
 factors = vecsort(factors);
 
-print("Found factors:");
+printf("Found factors of %d:\n", n);
 print(factors);
