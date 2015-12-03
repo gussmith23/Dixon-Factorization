@@ -66,9 +66,9 @@ qs_threshold = (log(n)/2 + log(M)) - (3/2)*log(B_largest_prime);
 
 \\ The matrix to Gaussian eliminate.
 exponent_matrix = []; 
-Qr_list = []; \\ The list of Q(r)s that go with each exponent mat.
-r_list = [];
-i_list = [];
+\\Qr_list = []; \\ The list of Q(r)s that go with each exponent mat.
+r_list = listcreate();
+\\i_list = [];
 
 factored_completely = 0; \\ Debug: count the number of Q(r)s that factor completely.
 
@@ -128,10 +128,10 @@ for(i = 1, #qs_sums, {
 			
 			\\ Place in matrix.
 			exponent_matrix = matconcat([exponent_matrix;exp_vec]);
-			Qr_list = matconcat([Qr_list,Qr]);
-			r_list = matconcat([r_list,r]);
-			i_list = matconcat([i_list,i]);
-			
+			\\Qr_list = matconcat([Qr_list,Qr]);
+			\\r_list = matconcat([r_list,r]);
+			\\i_list = matconcat([i_list,i]);
+			listput(r_list,r);
 			
 		); \\ End if factored over factor base
 		
@@ -147,9 +147,9 @@ exponent_matrix = exponent_matrix[2..exponent_matrix_size[1],1..exponent_matrix_
 exponent_matrix_size[1] -= 1; \\ make sure we update the new row count.
 
 \\ Additionally, change qr to a vector, not a 1xk matrix.
-Qr_list = Qr_list[1,];
-r_list = r_list[1,];
-i_list = i_list[1,];
+\\Qr_list = Qr_list[1,];
+\\r_list = r_list[1,];
+\\i_list = i_list[1,];
 
 \\ Keep a copy of the un-reduced exp. mat.
 exponent_matrix_unreduced = exponent_matrix;
@@ -165,7 +165,7 @@ exponent_matrix %= 2;
 \\ New strategy: Keep a vector of lists which will do the same as the above identity
 \\		matrix; that is, track what rows are added together to produce this row.
 \\ 		This will (hopefully) reduce memory consumption.
-component_lists = vector(exponent_matrix_size[1], unused, listcreate());
+component_lists = List(vector(exponent_matrix_size[1], unused, listcreate()));
 for(i = 1, exponent_matrix_size[1], listput(component_lists[i],i));
 
 \\ Eliminate mod 2.
@@ -173,9 +173,9 @@ for(i = 1, exponent_matrix_size[1], listput(component_lists[i],i));
 forstep(i = #B, 1, -1,{
 	
 	found_row = -1;
-	
+
 	\\ For each row...
-	for(j = 1, exponent_matrix_size[1],
+	for(j = 1, matsize(exponent_matrix)[1],
 	
 		\\ If we need to eliminate...
 		if(exponent_matrix[j, i] == 1,
@@ -186,9 +186,12 @@ forstep(i = #B, 1, -1,{
 			if(found_row == -1, 
 
 				found_row = j;
+				printf("first row with prime %d is %d\n", i, j);
 				
 				, \\ <-- begin ELSE clause. (i don't like this syntax!)
 				\\ ELSE: found_row equals some j, and we should use that row j to eliminate this row.
+				
+				printf("row %d has prime %d\n", j, i);
 				
 				\\ For each entry in row j, add the corresponding entry from found_row, mod 2.
 				for(k = 1, matsize(exponent_matrix)[2], 
@@ -201,8 +204,48 @@ forstep(i = #B, 1, -1,{
 				
 			);
 		);
-	);
-});
+		
+	);	\\ End for each row.
+
+	\\ Now we actually eliminate the row - i.e. remove it.
+	if(found_row != -1,
+	
+		old_exp_mat = exponent_matrix;
+		
+		printf("removing row %d, rows: %d\n", found_row, matsize(exponent_matrix)[1]);
+		\\print_matrix_readable(exponent_matrix);
+	
+			\\ CASE 1: we need to eliminate the first row.
+		if(found_row == 1,
+			exponent_matrix = exponent_matrix[2..exponent_matrix_size[1],];
+			print("case 1");
+			
+			\\ CASE 2: eliminate the last row.
+			, found_row == exponent_matrix_size[1],
+			exponent_matrix = exponent_matrix[1..(exponent_matrix_size[1]-1),];
+			print("case 2");
+			\\ Else: eliminate a middle row.
+			, exponent_matrix = matconcat([ exponent_matrix[1..(found_row-1),] ; exponent_matrix[(found_row+1)..matsize(exponent_matrix)[1],] ]);
+			print("case 3");
+		);
+		
+		\\print_matrix_readable(exponent_matrix);
+		printf("rows: %d\n", matsize(exponent_matrix)[1]);
+		
+		if(type(exponent_matrix) == "t_POL", breakpoint());
+				
+		listpop(r_list, found_row);
+		listpop(component_lists, found_row);
+
+				
+		exponent_matrix_size = matsize(exponent_matrix);
+		
+		
+		if(exponent_matrix_size[1] != #r_list, breakpoint());
+		
+	); \\ end if foundrow != -1
+
+}); \\ end for each column
 
 
 \\ Now find zero rows.
@@ -238,7 +281,11 @@ for(i = 1, exponent_matrix_size[1],{
 		
 		y = r_list[i];
 		
+		
+		
 		potential_factor = gcd(n,x-y);
+		
+		breakpoint();
 		
 		if(potential_factor != 1 && potential_factor != n,
 		
