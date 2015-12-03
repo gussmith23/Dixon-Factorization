@@ -19,8 +19,8 @@
  */
 
 \\ The number to factor.
-\\n = 135292257399511;   	\\ Assigned number.
-n = 499 94860 12441;			\\ Bressoud's number (Fact. and Primality Testing p110)
+n = 135292257399511;   	\\ Assigned number.
+\\n = 499 94860 12441;			\\ Bressoud's number (Fact. and Primality Testing p110)
 \\n = 100;
 
 
@@ -158,15 +158,8 @@ exponent_matrix_unreduced = exponent_matrix;
 exponent_matrix %= 2;
 
 
-\\ OBSOLETE:
 \\ Append identity matrix.
-\\exponent_matrix = matconcat([exponent_matrix, matid(exponent_matrix_size[1])]);
-
-\\ New strategy: Keep a vector of lists which will do the same as the above identity
-\\		matrix; that is, track what rows are added together to produce this row.
-\\ 		This will (hopefully) reduce memory consumption.
-component_lists = List(vector(exponent_matrix_size[1], unused, listcreate()));
-for(i = 1, exponent_matrix_size[1], listput(component_lists[i],i));
+exponent_matrix = matconcat([exponent_matrix, matid(exponent_matrix_size[1])]);
 
 \\ Eliminate mod 2.
 \\ For each column (starting with larger primes first)...
@@ -175,7 +168,7 @@ forstep(i = #B, 1, -1,{
 	found_row = -1;
 
 	\\ For each row...
-	for(j = 1, matsize(exponent_matrix)[1],
+	for(j = 1, exponent_matrix_size[1],
 	
 		\\ If we need to eliminate...
 		if(exponent_matrix[j, i] == 1,
@@ -194,14 +187,15 @@ forstep(i = #B, 1, -1,{
 				printf("row %d has prime %d\n", j, i);
 				
 				\\ For each entry in row j, add the corresponding entry from found_row, mod 2.
-				for(k = 1, matsize(exponent_matrix)[2], 
+				\\ Note here that we use matsize instead of exponent_matrix_size, as we want to
+				\\		add the ENTIRE row, including the identity matrix entries.
+				/*for(k = 1, matsize(exponent_matrix)[2], 
 					exponent_matrix[j,k] += exponent_matrix[found_row,k];
 					exponent_matrix[j,k] %= 2;
-				);
-				
-				\\ Log that we added row found_row into row j.
-				listput(component_lists[j], found_row);
-				
+				);*/
+				exponent_matrix[j,] += exponent_matrix[found_row,];
+				exponent_matrix[j,] %= 2;
+								
 			);
 		);
 		
@@ -209,9 +203,7 @@ forstep(i = #B, 1, -1,{
 
 	\\ Now we actually eliminate the row - i.e. remove it.
 	if(found_row != -1,
-	
-		old_exp_mat = exponent_matrix;
-		
+			
 		printf("removing row %d, rows: %d\n", found_row, matsize(exponent_matrix)[1]);
 		\\print_matrix_readable(exponent_matrix);
 	
@@ -224,6 +216,7 @@ forstep(i = #B, 1, -1,{
 			, found_row == exponent_matrix_size[1],
 			exponent_matrix = exponent_matrix[1..(exponent_matrix_size[1]-1),];
 			print("case 2");
+			
 			\\ Else: eliminate a middle row.
 			, exponent_matrix = matconcat([ exponent_matrix[1..(found_row-1),] ; exponent_matrix[(found_row+1)..matsize(exponent_matrix)[1],] ]);
 			print("case 3");
@@ -233,16 +226,12 @@ forstep(i = #B, 1, -1,{
 		printf("rows: %d\n", matsize(exponent_matrix)[1]);
 		
 		if(type(exponent_matrix) == "t_POL", breakpoint());
+								
+		\\ Reduce row count by one.
+		\\ Note that this isn't as straightforward as exponent_matrix_size = matsize(exponent_matrix)...
+		\\		this is because the ACTUAL size of the exponent_matrix includes the identity portion.
+		exponent_matrix_size[1] -= 1;
 				
-		listpop(r_list, found_row);
-		listpop(component_lists, found_row);
-
-				
-		exponent_matrix_size = matsize(exponent_matrix);
-		
-		
-		if(exponent_matrix_size[1] != #r_list, breakpoint());
-		
 	); \\ end if foundrow != -1
 
 }); \\ end for each column
@@ -260,36 +249,42 @@ for(i = 1, exponent_matrix_size[1],{
 		
 		\\ Generate exponent vector.
 		exponents = vector(exponent_matrix_size[2], unused, 0);
-		
-		\\ The list of rows that went into making this row.
-		component_list = component_lists[i];
-		
-		\\ For each entry in component_list...
-		for(j = 1, #component_list, 
-			exponents += exponent_matrix_unreduced[component_list[j],];
+		x = 1;
+		y = 1;
+		for(j = exponent_matrix_size[2] + 1, matsize(exponent_matrix)[2],
+			if(exponent_matrix[i,j] == 1,
+			
+				\\ Add in the corresponding exponents
+				exponents += exponent_matrix_unreduced[j-exponent_matrix_size[2],];
+				
+				\\ Multiply the corresponding r into x.
+				x *= r_list[j-exponent_matrix_size[2]];
+				x =  x % n;
+			);
 		);
-						
+								
 		\\ Calculate value of factor base raised to exponents/2. Note that 
 		\\	exponents should be divisible by 2; I'll leave the "floor" out
 		\\	so that an error case where this isn't true should be immediately clear.
 		exponents = exponents/2;
 		
-		x = 1;
+		
 		for(j = 1, #B, 
-			x *= B[j]^exponents[j];
+			y *= B[j]^exponents[j];
+			y %= n;
 		);
-		
-		y = r_list[i];
-		
+				
 		
 		
 		potential_factor = gcd(n,x-y);
-		
-		breakpoint();
-		
+				
 		if(potential_factor != 1 && potential_factor != n,
 		
-			if(setsearch(factors,potential_factor) == 0, factors = setunion(factors,[potential_factor]));
+			\\ If it's not already there, add it and its "complement", n/potential_factor.
+			if(setsearch(factors,potential_factor) == 0, 
+				factors = setunion(factors,[potential_factor]);
+				factors = setunion(factors,[n/potential_factor]);
+			);
 			
 		);
 	);
