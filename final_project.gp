@@ -26,7 +26,7 @@ n = 135292257399511;
  */
 
 \\ Announce!
-printf("Attempting to factor %ld.", n);
+printf("Attempting to factor %ld.\n", n);
 
 
 \\\\\\\\\\\\\\\\\\\\\\\
@@ -39,12 +39,12 @@ M = 5000;
 Q_eqn(r) = r*r-n;
 r_eqn(i) = floor(sqrt(n)) + i - M;
 
-printf("Step 1: building a factor base. Factor base size = %i.", B_size);
+printf("Step 1: building a factor base. Factor base size = %i.\n", B_size);
 
 \\ Get the factor base.
 B = factor_base(n, B_size);
 B_largest_prime= B[#B];
-printf("Factor base of size %i:", B_size);
+printf("Factor base of size %i:\n", B_size);
 print(B);
 
 \\\\\\\\\\\\\\\\\\\\\\\
