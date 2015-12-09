@@ -146,6 +146,11 @@ exponent_matrix_unreduced = exponent_matrix;
 
 printf("Quadratic Sieve produced exponent matrix with %d rows.\n", exponent_matrix_size[1]);
 
+if(exponent_matrix_size[1] <= B_size, {
+	printf("Warning: less rows than columns in the exponent matrix. When we Gaussian reduce, there is no guarantee that we'll produce zero rows.\n");
+	printf("\tRows:\t%d\n", exponent_matrix_size[1]);
+	printf("\tColumns:\t%d\n",B_size);
+});
 
 \\\\\\\\\\\\\\\\\\\\\\\
 \\ Step 3: Gaussian Elimination.
