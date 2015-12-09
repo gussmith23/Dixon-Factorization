@@ -39,8 +39,6 @@ quadratic_sieve(factor_base,n,M,r) =
 			if (j==1,
 				\\ METHOD 1. We use this on the first iteration.
 				a = tonelli(n,p);
-				\\ Debug.
-				printf("%d^2 \equiv %d mod %d\n",a,n,p);
 				,
 				\\ else METHOD 2. 
 				a = hensel_lift(a,n,p,j-1);

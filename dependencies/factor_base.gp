@@ -25,12 +25,9 @@ factor_base(n,B) =
 
 		\\ Find more primes
 		lim += 100;
-		printf("Increased prime limit to %i...", lim);
 		h = prime_sieve(lim);
-		printf("prime sieve found %i primes.\n", #h);
 		
 		\\ Check (n/p) on new primes
-		printf("Checking (%i/p) for primes %i to %i:\n", n, last_prime_checked+1, #h);
 		for(i = last_prime_checked+1, #h,
 			if(jacobi(n,h[i])==1, 
 				listput(factor_base,h[i]);
@@ -40,9 +37,6 @@ factor_base(n,B) =
 		
 		\\ This value makes sure we don't check any primes we've already checked
 		last_prime_checked = #h;
-		
-		printf("Found %i of %i primes in our factor base.\n\n", #factor_base, goal);
-
 
 	);
 
