@@ -1,6 +1,5 @@
 /**
- * Gus Henry Smith <hfs5022@psu.edu>
- * Building a Factor Base.
+ * Builds a factor base of B primes p such that (n/p) = 1.
  */
 factor_base(n,B) =
 {

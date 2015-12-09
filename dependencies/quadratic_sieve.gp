@@ -9,8 +9,10 @@ hensel_lift_amounts[17] = 2;
 hensel_lift_amounts[19] = 2;
 hensel_lift_amounts[23] = 2;
 
-
-quadratic_sieve(factor_base,n,M,r) =
+/**
+ * Quadratic sieve over factor_base for r(x) in the range sqrt(n) - M <= r(x) <= sqrt(n) + M.
+ */
+ quadratic_sieve(factor_base,n,M,r) =
 {
 	local(qs_mat = matrix(2*M+1, #factor_base));
 	local(sqrt_n = floor(sqrt(n)));

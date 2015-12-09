@@ -1,6 +1,5 @@
-
 /**
- * Helper functions
+ * Helper functions.
  */
 print_matrix_readable(m) =
 {

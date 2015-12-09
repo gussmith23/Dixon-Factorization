@@ -1,3 +1,6 @@
+/**
+ * Trial division on n up to a bound max_bound.
+ */
 trial_division(n,max_bound) =
 {
 
