@@ -32,7 +32,7 @@ printf("Attempting to factor %ld.\n", n);
 \\\\\\\\\\\\\\\\\\\\\\\
 \\ STEP 1: Choose B and M; build a factor base.
 
-B_size = 65;
+B_size = 30;
 M = 5000;
 
 \\ Expressions for Q(r) and r
@@ -53,7 +53,7 @@ print(B);
 \\ Via hand calculation, I calculated a such that B_largest_prime \approx n^(1/a).
 \\		From this a, I looked up the probability that n factors with largest prime < n^(1/a) = B_largest_prime.
 \\		This data was looked up using the Knuth/Trabb-Pardo table on p106 of Bressoud.
-p_a = 3.55e-4;
+p_a = 1.96e-5;
 
 \\ Now we perform the "sanity check" calculation, where we check that 
 \\    expected number of factorizations >= B_size.
@@ -148,7 +148,7 @@ printf("Quadratic Sieve produced exponent matrix with %d rows.\n", exponent_matr
 
 if(exponent_matrix_size[1] <= B_size, {
 	printf("Warning: less rows than columns in the exponent matrix. When we Gaussian reduce, there is no guarantee that we'll produce zero rows.\n");
-	printf("\tRows:\t%d\n", exponent_matrix_size[1]);
+	printf("\tRows:\t\t%d\n", exponent_matrix_size[1]);
 	printf("\tColumns:\t%d\n",B_size);
 });
 
