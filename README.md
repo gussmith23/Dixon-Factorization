@@ -14,10 +14,15 @@ Dixon's Factorization Algorithm including
 
 ### Report
 A general overview of Dixon's scheme (plus Pomerance's quadratic sieve) is as follows:
+
 1. Create a factor base of length B of primes p such that (n/p) = 1.
+
 2. Run the quadratic sieve over our factor base, on a total of 2M+1 values of Q(r) = r^2 - n, sqrt(n) - M < r < sqrt(n) + M.
+
 3. Based on the results from the quadratic sieve, attempt trial division on a portion of our 2M+1 numbers. Store complete factorizations over B in an exponent matrix.
+
 4. Reduce this matrix mod 2 to find rows of exponents representing products of Q(r)s with only even exponents.
+
 5. Compute the square root of the product of the r-values which compose this product; call this x. Compute the square root of this even-exponent product of Q(r)s; call this y. Now gcd(n, x-y) has a chance of being a nontrivial factor of n.
 
 In general, my program follows this procedure to a tee, with the inclusion of two main improvements:
